@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Inventar Touch Pro + Coduri de bare</title>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; padding: 0; font-family: Arial, sans-serif; background: #f3f6fb; color: #17202a; }
+    body { font-size: 18px; }
+    .wrap { max-width: 1700px; margin: 0 auto; padding: 16px; }
+    .card {
+      background: #fff; border-radius: 18px; padding: 16px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.08); margin-bottom: 16px;
+    }
+    h1 { margin: 0 0 8px; font-size: 30px; }
+    h2 { margin: 0 0 12px; font-size: 22px; }
+    .muted { color: #5f6b7a; font-size: 15px; line-height: 1.4; }
+    .controls, .form-grid, .scan-grid, .barcode-tools {
+      display: grid; gap: 12px;
+    }
+    .controls { grid-template-columns: 1.2fr 1fr 1fr 1fr 1fr; }
+    .form-grid { grid-template-columns: repeat(5, 1fr); }
+    .scan-grid { grid-template-columns: 1fr auto auto; align-items: end; }
+    .barcode-tools { grid-template-columns: 1fr auto auto auto; align-items: end; }
+    label { display: block; font-weight: 700; margin-bottom: 6px; font-size: 14px; color: #314155; }
+    input, select, button, textarea {
+      width: 100%; min-height: 56px; border-radius: 14px;
+      border: 1px solid #d8dee8; padding: 12px 14px; font-size: 18px; background: #fff;
+    }
+    input[type="number"] { text-align: right; }
+    button { font-weight: 700; cursor: pointer; }
+    button.primary { background: #0f172a; color: #fff; border: none; }
+    button.green { background: #14532d; color: #fff; border: none; }
+    button.red { background: #991b1b; color: #fff; border: none; }
+    button.orange { background: #9a3412; color: #fff; border: none; }
+    button.blue { background: #1d4ed8; color: #fff; border: none; }
+    button.gray { background: #eef2f7; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .stat { background: #fff; border-radius: 18px; padding: 16px; box-shadow: 0 6px 24px rgba(0,0,0,0.08); }
+    .stat .label { color: #697586; font-size: 14px; margin-bottom: 6px; }
+    .stat .value { font-size: 28px; font-weight: 800; }
+    .table-wrap {
+      overflow: auto; border-radius: 16px; max-height: 62vh;
+      border: 1px solid #e5eaf1; -webkit-overflow-scrolling: touch;
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 1850px; background: white; }
+    th, td { padding: 14px 12px; border-bottom: 1px solid #e8edf3; text-align: left; white-space: nowrap; font-size: 16px; vertical-align: top; }
+    th { position: sticky; top: 0; background: #f7f9fc; z-index: 2; }
+    tr:hover td { background: #fafcff; }
+    .row-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .row-actions button { min-height: 46px; padding: 8px 12px; font-size: 15px; width: auto; }
+    .qty-box { display: flex; gap: 8px; align-items: center; }
+    .qty-box input { min-width: 100px; max-width: 120px; min-height: 48px; }
+    .qty-box button { width: auto; min-width: 52px; min-height: 48px; }
+    .pagination {
+      display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; flex-wrap: wrap;
+    }
+    .page-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .pill { background: #eef2ff; padding: 8px 12px; border-radius: 999px; font-size: 14px; }
+    .video-wrap { display:none; margin-top: 12px; }
+    video {
+      width: 100%; max-width: 520px; border-radius: 18px; background: #000;
+      border: 1px solid #d8dee8;
+    }
+    .success { color: #14532d; font-weight: 700; }
+    .danger { color: #991b1b; font-weight: 700; }
+    .hint { font-size: 14px; color: #697586; margin-top: 6px; }
+    .toolbar { display:flex; gap:10px; flex-wrap:wrap; margin-top: 12px; }
+    .toolbar button { width:auto; padding: 0 18px; }
+    .small { font-size: 14px; color: #697586; }
+    .badge { background:#ecfeff; color:#155e75; padding:4px 8px; border-radius:999px; font-size:13px; font-weight:700; }
+    .barcode-svg {
+      display:block; background:#fff; padding:6px; border:1px solid #e5e7eb; border-radius:10px;
+      width:230px; min-height:72px;
+    }
+    .barcode-modal {
+      position: fixed; inset: 0; background: rgba(15,23,42,0.65); display: none;
+      align-items: center; justify-content: center; padding: 20px; z-index: 9999;
+    }
+    .barcode-modal.active { display: flex; }
+    .barcode-modal-content {
+      background: white; width: min(95vw, 900px); border-radius: 20px; padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .barcode-preview {
+      background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 20px; text-align: center;
+      margin-top: 12px;
+    }
+    .barcode-preview svg { max-width: 100%; height: auto; }
+    .print-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;
+    }
+    .print-card {
+      border: 1px solid #dbe3ed; border-radius: 16px; padding: 12px; background: white; text-align: center;
+      break-inside: avoid;
+    }
+    .print-card .name {
+      font-weight: 700; font-size: 16px; margin-bottom: 6px; white-space: normal;
+    }
+    .print-card .code {
+      color: #475569; margin-top: 6px; font-size: 14px;
+    }
+    @media print {
+      body * { visibility: hidden; }
+      #printArea, #printArea * { visibility: visible; }
+      #printArea { position: absolute; left: 0; top: 0; width: 100%; background: white; }
+      .no-print { display:none !important; }
+    }
+    @media (max-width: 1100px) {
+      .controls, .form-grid, .barcode-tools { grid-template-columns: repeat(2, 1fr); }
+      .scan-grid { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .wrap { padding: 10px; }
+      h1 { font-size: 24px; }
+      .controls, .form-grid, .stats, .barcode-tools { grid-template-columns: 1fr; }
+      input, select, button { font-size: 19px; min-height: 60px; }
+      th, td { font-size: 15px; padding: 12px 10px; }
+      .qty-box input { max-width: 90px; }
+      .barcode-svg { width: 200px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap no-print">
+    <div class="card">
+      <h1>Inventar Touch Pro + Coduri de bare</h1>
+      <div class="muted">
+        Include: adăugare produs, ștergere produs, salvare locală, scanare cod, recalcul automat stoc și generare / printare coduri de bare.
+      </div>
+      <div class="toolbar">
+        <button class="primary" id="saveBtn">Salvează local</button>
+        <button class="gray" id="resetDataBtn">Revino la datele inițiale</button>
+        <button class="gray" id="exportBtn">Export CSV</button>
+        <button class="blue" id="printAllBarcodesBtn">Tipărește toate codurile</button>
+        <span class="badge" id="saveStatus">Date locale inactive</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Scanare cod produs</h2>
+      <div class="scan-grid">
+        <div>
+          <label for="scanInput">Cod scanat / introdus manual</label>
+          <input id="scanInput" placeholder="Scanează sau scrie codul produsului" />
+          <div class="hint">Dacă tableta are scaner extern sau tastatură tip scanner, codul intră direct aici.</div>
+        </div>
+        <button class="green" id="startScanBtn">Pornește camera</button>
+        <button class="red" id="stopScanBtn">Oprește camera</button>
+      </div>
+      <div class="video-wrap" id="videoWrap">
+        <video id="video" autoplay playsinline muted></video>
+      </div>
+      <div id="scanMessage" class="small" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="label">Produse afișate</div><div class="value" id="countProducts">0</div></div>
+      <div class="stat"><div class="label">Stoc final total</div><div class="value" id="sumStock">0</div></div>
+      <div class="stat"><div class="label">Categorii</div><div class="value" id="countCategories">0</div></div>
+      <div class="stat"><div class="label">Pagina</div><div class="value" id="currentPageLabel">1</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Adăugare produs nou</h2>
+      <div class="form-grid">
+        <div><label>Categorie</label><input id="newCategorie" placeholder="Ex: Profile" /></div>
+        <div><label>Cod produs</label><input id="newCod" placeholder="Ex: P12345" /></div>
+        <div><label>Denumire produs</label><input id="newDenumire" placeholder="Ex: Profil aluminiu" /></div>
+        <div><label>UM</label><input id="newUM" placeholder="Ex: buc / m / kg" /></div>
+        <div><label>Stoc inițial</label><input id="newStocInitial" type="number" step="any" value="0" /></div>
+      </div>
+      <div class="toolbar">
+        <button class="green" id="addProductBtn">Adaugă produs</button>
+        <button class="blue" id="generateCodeForNewBtn">Generează cod automat</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Filtre și căutare</h2>
+      <div class="controls">
+        <div>
+          <label for="search">Căutare</label>
+          <input id="search" type="text" placeholder="Cod produs, denumire, categorie..." />
+        </div>
+        <div>
+          <label for="categoryFilter">Categorie</label>
+          <select id="categoryFilter"><option value="">Toate categoriile</option></select>
+        </div>
+        <div>
+          <label for="stockFilter">Stoc</label>
+          <select id="stockFilter">
+            <option value="">Toate</option>
+            <option value="positive">Doar stoc &gt; 0</option>
+            <option value="zero">Doar stoc = 0</option>
+            <option value="negative">Doar stoc &lt; 0</option>
+          </select>
+        </div>
+        <div>
+          <label for="rowsPerPage">Rânduri / pagină</label>
+          <select id="rowsPerPage">
+            <option>10</option>
+            <option>25</option>
+            <option selected>50</option>
+            <option>100</option>
+            <option>500</option>
+          </select>
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button class="gray" id="resetFiltersBtn">Reset filtre</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="table-wrap">
+        <table id="inventoryTable">
+          <thead>
+            <tr>
+              <th data-key="Categorie">Categorie</th>
+              <th data-key="Cod produs">Cod produs</th>
+              <th data-key="Denumire produs">Denumire produs</th>
+              <th data-key="Stoc initial">Stoc inițial</th>
+              <th data-key="Intrari">Intrări</th>
+              <th>+ Intrare</th>
+              <th data-key="Iesiri">Ieșiri</th>
+              <th>- Ieșire</th>
+              <th data-key="Stoc final">Stoc final</th>
+              <th data-key="Data intrari">Data intrări</th>
+              <th data-key="Data iesiri">Data ieșiri</th>
+              <th data-key="UM">UM</th>
+              <th>Cod de bare</th>
+              <th>Acțiuni</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <div id="resultInfo">0 rezultate</div>
+        <div class="page-controls">
+          <button id="prevBtn">◀ Pagina anterioară</button>
+          <span class="pill" id="pageInfo">Pagina 1 / 1</span>
+          <button id="nextBtn">Pagina următoare ▶</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="barcode-modal" id="barcodeModal">
+    <div class="barcode-modal-content">
+      <div class="toolbar no-print" style="margin-top:0;">
+        <button class="gray" id="closeBarcodeModalBtn">Închide</button>
+        <button class="blue" id="downloadBarcodeSvgBtn">Descarcă SVG</button>
+        <button class="blue" id="printSingleBarcodeBtn">Tipărește</button>
+      </div>
+      <div class="barcode-preview" id="barcodePreview"></div>
+    </div>
+  </div>
+
+  <div id="printArea"></div>
+
+  <script>
+    const INITIAL_DATA = [{"Categorie": "PROFILE", "Cod produs": "E-19650", "Denumire produs": "Capac 22603", "Stoc initial": 0, "Intrari": 9, "Data intrari": "2026-01-30 00:00:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 9, "UM": "BUC"}, {"Categorie": "PROFILE", "Cod produs": "E-22603", "Denumire produs": "Profil ramforsare", "Stoc initial": 0, "Intrari": 9, "Data intrari": "2026-01-30 00:00:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 9, "UM": "BUC"}, {"Categorie": "PROFILE", "Cod produs": "E-C2440", "Denumire produs": "Toc BT deschidere int", "Stoc initial": 0, "Intrari": 1, "Data intrari": "2026-01-30 00:00:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 1, "UM": "BUC"}, {"Categorie": "ACCESORII", "Cod produs": "ET050027.00", "Denumire produs": "EXTR.AL.SHIMMING CORNER-8.2MME50(40920)", "Stoc initial": 0, "Intrari": 32, "Data intrari": "2026-01-30 00:00:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 32, "UM": "BUC"}, {"Categorie": "GARNITURI", "Cod produs": "ET130070.00", "Denumire produs": "central EPDM gasket for EW70", "Stoc initial": 0, "Intrari": 40, "Data intrari": "2026-01-30 00:00:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 40, "UM": "M"}, {"Categorie": "ALUMIL", "Cod produs": "S-61508", "Denumire produs": "TOC", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-16 14:04:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S-61652", "Denumire produs": "TOC", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-16 14:04:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S-61510", "Denumire produs": "TOC", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-16 14:04:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S-61514", "Denumire produs": "TOC", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-16 14:07:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S-61548", "Denumire produs": "TOC", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-16 14:07:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S-61906", "Denumire produs": "TOC", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-16 14:07:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S-61150", "Denumire produs": "TOC", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-16 14:07:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S-61500", "Denumire produs": "TOC", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-16 14:07:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S-61936", "Denumire produs": "CCV", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-16 14:10:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S-61976", "Denumire produs": "CCV", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-16 14:10:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S-61552", "Denumire produs": "CCV", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-16 14:10:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S-61829", "Denumire produs": "CCV", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-16 14:10:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S-61938", "Denumire produs": "CCV", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-16 14:10:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S-61972", "Denumire produs": "CCV", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-16 14:10:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S-61893", "Denumire produs": "CCV", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-16 14:10:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S-61690", "Denumire produs": "CCV", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-16 14:10:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S-61630", "Denumire produs": "CCV", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-16 14:13:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S-61684", "Denumire produs": "PRAG", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-16 14:15:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S61194", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:49:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S61270", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:49:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S61964", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:49:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77010", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:49:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77079", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77072", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S61317", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67000", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S60057", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67905", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77387", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M12412", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77901", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S70794", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S70793", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67025", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67023", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77338", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67290", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:55:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67592", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:55:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67178", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:55:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S61183", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:55:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S61622", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:55:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S61623", "Denumire produs": "ACCESORII – PROFILE AUXILIARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:55:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1807728000", "Denumire produs": "ACCESORII MECANICE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:20:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1807715500", "Denumire produs": "COLȚARE (Corner cleats – πρεσσαριστή) Colțar aliniere / colțar universal", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:55:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1807701100", "Denumire produs": "COLȚARE (Corner cleats – πρεσσαριστή) Colțar aliniere / colțar universal", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:58:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1807719000", "Denumire produs": "COLȚARE (Corner cleats – πρεσσαριστή) Colțar aliniere / colțar universal", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:58:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1807719001", "Denumire produs": "COLȚARE (Corner cleats – πρεσσαριστή) Colțar aliniere / colțar universal", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:58:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1807733200", "Denumire produs": "COLȚARE (Corner cleats – πρεσσαριστή) Colțar aliniere / colțar universal", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:58:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1807733201", "Denumire produs": "COLȚARE (Corner cleats – πρεσσαριστή) Colțar aliniere / colțar universal", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:58:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1657700100 – RIGHT", "Denumire produs": "T-cleat standard", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:49:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1657700200 – LEFT", "Denumire produs": "T-cleat standard", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:49:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1607723000 – IN", "Denumire produs": "T-cleat turnat (Cast T-cleat)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:49:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1607723001 – OUT", "Denumire produs": "T-cleat turnat (Cast T-cleat)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:49:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1607719000 – IN", "Denumire produs": "T-cleat turnat (Cast T-cleat)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1607719001 – OUT", "Denumire produs": "T-cleat turnat (Cast T-cleat)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1607733200", "Denumire produs": "T-cleat turnat (Cast T-cleat)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1607733201", "Denumire produs": "T-cleat turnat (Cast T-cleat)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "2000686001", "Denumire produs": "CLEME / CONECTORI ÎMBINARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "2109660103", "Denumire produs": "CLEME / CONECTORI ÎMBINARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "2200093003", "Denumire produs": "CLEME / CONECTORI ÎMBINARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "2201200100", "Denumire produs": "CLEME / CONECTORI ÎMBINARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "2206300001", "Denumire produs": "CLEME / CONECTORI ÎMBINARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1802000000", "Denumire produs": "CLEME / CONECTORI ÎMBINARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 08:50:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1131106000", "Denumire produs": "Garnituri principale", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1131327400", "Denumire produs": "Garnituri principale", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1132310200", "Denumire produs": "Garnitură presiune mare", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:20:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1132319600", "Denumire produs": "Garnitură alternativă", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:20:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1133310200", "Denumire produs": "Garnitură exterioară", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:20:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1133319600", "Denumire produs": "Garnitură exterioară alternativă", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:20:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1134325800", "Denumire produs": "Garnituri principale", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1135725800", "Denumire produs": "Garnituri principale", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1137510200", "Denumire produs": "Garnituri principale", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1137519600", "Denumire produs": "Garnituri principale", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1405828000", "Denumire produs": "Alternative / compatibile", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1405829000", "Denumire produs": "Alternative / compatibile", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1405830000", "Denumire produs": "Alternative / compatibile", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1405831000", "Denumire produs": "Alternative / compatibile", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1405832000", "Denumire produs": "Alternative / compatibile", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1405852000", "Denumire produs": "Alternative / compatibile", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1405853000", "Denumire produs": "Alternative / compatibile", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1405854000", "Denumire produs": "Alternative / compatibile", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1251326400", "Denumire produs": "Alternative / compatibile", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1251926700", "Denumire produs": "Alternative / compatibile", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1252319600", "Denumire produs": "Alternative / compatibile", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "3131201000 – 12×10", "Denumire produs": "BARE TERMICE – NRG BAR", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "3131001700 – 17×10", "Denumire produs": "BARE TERMICE – NRG BAR", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "3132001000 – 20×10", "Denumire produs": "BARE TERMICE – NRG BAR", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "3131003100 – 31×10", "Denumire produs": "BARE TERMICE – NRG BAR", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "3131004800 – 48×10", "Denumire produs": "BARE TERMICE – NRG BAR", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "3131503000 – 30×15", "Denumire produs": "BARE TERMICE – NRG BAR", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "3134001400 – 40×14", "Denumire produs": "BARE TERMICE – NRG BAR", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:10:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "3131007300 – 73×10", "Denumire produs": "BARE TERMICE – NRG BAR", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:10:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "3106168403", "Denumire produs": "CAPACE / TĂPI (End caps)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:24:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "3106127003", "Denumire produs": "CAPACE / TĂPI (End caps)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:25:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "3106107203", "Denumire produs": "CAPACE / TĂPI (End caps)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:25:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "3107707903", "Denumire produs": "CAPACE / TĂPI (End caps)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:25:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "3100931803", "Denumire produs": "CAPACE / TĂPI (End caps)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:25:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "3111138700", "Denumire produs": "CAPACE / TĂPI (End caps)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:25:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "3117079303", "Denumire produs": "CAPACE / TĂPI (End caps)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:25:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "4701183500", "Denumire produs": "ACCESORII MECANICE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:20:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M9372 – DISTANȚIER (X = 25 MM)", "Denumire produs": "ACCESORII SPECIALE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:28:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M9570 – DISTANȚIER (X = 35 MM)", "Denumire produs": "ACCESORII SPECIALE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:28:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M9351 – PROFIL PRAG", "Denumire produs": "ACCESORII SPECIALE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:28:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M12412 – PROFIL ADIȚIONAL SPECIAL", "Denumire produs": "ACCESORII SPECIALE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:28:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S61658", "Denumire produs": "Montanți / îmbinări", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:29:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S61879", "Denumire produs": "Montanți / îmbinări", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:30:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S61566", "Denumire produs": "Stâlpi / profile T", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:30:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S61564", "Denumire produs": "Stâlpi / profile T", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:30:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S61260", "Denumire produs": "Stâlpi / profile T", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:30:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S61656", "Denumire produs": "Stâlpi / profile T", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:30:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S61776", "Denumire produs": "Stâlpi / profile T", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:30:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S61770", "Denumire produs": "Stâlpi / profile T", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:30:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77658", "Denumire produs": "Montant standard", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:20:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77758", "Denumire produs": "Montant ranforsat", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:20:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77879", "Denumire produs": "Montant heavy duty", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:20:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77924", "Denumire produs": "Montant special", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:20:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77508", "Denumire produs": "Toc standard, cel mai folosit", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77510", "Denumire produs": "Toc alternativ", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77514", "Denumire produs": "Toc estetic / special", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77814", "Denumire produs": "Toc uși / heavy duty", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77080", "Denumire produs": "Toc design modern", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77092", "Denumire produs": "Toc design diferit", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77090", "Denumire produs": "Toc auxiliar", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77094", "Denumire produs": "Toc tehnic", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77044", "Denumire produs": "Toc îngust", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77762", "Denumire produs": "Cercevea standard", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77906", "Denumire produs": "Cercevea ranforsată", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77630", "Denumire produs": "Cercevea Variantă alternativă", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77936", "Denumire produs": "Cercevea Soluții speciale", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77552", "Denumire produs": "Cercevea Clasică", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77829", "Denumire produs": "Cercevea Uși", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77690", "Denumire produs": "Cercevea Îngustă", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77893", "Denumire produs": "Cercevea Cu stâlp", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77988", "Denumire produs": "Cercevea Heavy duty", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77562", "Denumire produs": "Stâlp T standard", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77564", "Denumire produs": "Stâlp T îngust", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77566", "Denumire produs": "Stâlp T ranforsat", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 09:55:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77568", "Denumire produs": "Stâlp T heavy duty", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:20:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77570", "Denumire produs": "Stâlp T special", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:20:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77770", "Denumire produs": "Stâlp T uși", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:20:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77776", "Denumire produs": "Stâlp T heavy duty uși", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:20:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1657700100", "Denumire produs": "ACCESORII MECANICE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:20:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1657700200", "Denumire produs": "ACCESORII MECANICE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:20:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1607723000", "Denumire produs": "ACCESORII MECANICE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:20:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1607723001", "Denumire produs": "ACCESORII MECANICE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:20:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "4700087000", "Denumire produs": "Pin colt;aliniază profilele la 90°", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "4705146000", "Denumire produs": "Surub colt;element de fixare colțar", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "1131319600", "Denumire produs": "Garnitură interioară", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:20:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "3132501000", "Denumire produs": "10 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:20:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "3132502100", "Denumire produs": "21 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:20:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "3132503100", "Denumire produs": "31 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:20:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "3132504800", "Denumire produs": "48 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:20:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M958", "Denumire produs": "Toc deschidere", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M990", "Denumire produs": "Profil suplimentar;se montează pe toc (M958) folosit pentru:mărirea adâncimii tocului,corectarea grosimii zidului,foarte des folosit în monta", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:34:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M988", "Denumire produs": "Profil adițional", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M971", "Denumire produs": "Profil extensie;de rigidizare crește rigiditatea ansamblului recomandat la:ferestre mari,greutăți ridicate se folosește împreună cu tocul", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:34:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M948", "Denumire produs": "Profil extensie;extensie mică de toc", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:34:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M949", "Denumire produs": "Profil extensie;variantă mai lată decât M948", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:34:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M976", "Denumire produs": "Profil adițional", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M998", "Denumire produs": "Profil suplimentar;profil „de rezervă” pentru situații atipice", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:34:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M972", "Denumire produs": "Profil adițional", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M9351", "Denumire produs": "Profil drenaj;inferior (bază toc) montat jos, la bază", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:34:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M9317", "Denumire produs": "Profil drenaj", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M11116", "Denumire produs": "Profil picurător", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M9324", "Denumire produs": "Profil auxiliar;suport pentru: accesorii", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:34:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M9316", "Denumire produs": "Profil mecanism/feronerie;ghid și suport pentru:tije,mecanisme de închidere,integrat în ansamblu", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:34:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M993", "Denumire produs": "Cercevea European Groove;cu baghetă integrată pentru ferestre oscilo-batante / batante ;cea mai folosită cercevea la ferestre;standardul principal la ferestre", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M963", "Denumire produs": "Cercevea cu baghetă;variantă ranforsată;similară cu M993,mai rigidă pentru dimensiuni mai mari sau greutăți mai mari;", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M989", "Denumire produs": "Cercevea ușă deschidere spre interior,profil dedicat ușilor de acces,permite broaște, cilindru, prag,masivă, rigidă; uși simple de acces", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M992", "Denumire produs": "Stulp cand greutatea este mare,este folosit ca si profil rigidizare", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M942", "Denumire produs": "Cercevea;Cercevea fereastră – profil îngust aspect mai suplu pentru ferestre mici / medii,design mai elegant când vrei mai multă lumină", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M944", "Denumire produs": "Cercevea;Cercevea fereastră – variantă medie,echilibru între rigiditate și aspect cel mai DES folosita", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M964", "Denumire produs": "Cercevea;ranforsată pt ferestre mai mari,dar nu usa", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M947", "Denumire produs": "combinabil;fix+mobil", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:34:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M977", "Denumire produs": "special pt atipice", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:34:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M951", "Denumire produs": "Cercevea;folosită la ferestre standard bun compromis rigiditate / greutate, variantă clasică de fereastră", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M952", "Denumire produs": "Cercevea variantă rigidizată pt geam mai greu", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M953", "Denumire produs": "Cercevea cerințe de rezistență ferestre mari", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M957", "Denumire produs": "Cercevea pt ferestre foarte mari,geam triplu", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M950", "Denumire produs": "structural,profil masiv folosit pt zone cu solicitari mari", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:34:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M928", "Denumire produs": "Cercevea plasă dedicată exclusiv pentru:rame de plasă,plase glisante nu se folosește la geam", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M19689", "Denumire produs": "Stulp folosit RAR ,atipice", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M961", "Denumire produs": "Stulp cel mai folosit;este cel mai folosit pt ferestre duble/STANDARD", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M991", "Denumire produs": "Stulp pt ferestre duble clasice utilizat intre 2 ccv mobile", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M997", "Denumire produs": "Stulp pt ferestre si combinatii foarte mari", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M922", "Denumire produs": "îngust,aspect subtire", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M903", "Denumire produs": "standard cel mai des folosit", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:34:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M904", "Denumire produs": "ranforsat ,pt goluri mai amri", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 10:34:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "180-20-000-00", "Denumire produs": "Colțar aliniere;aliniază perfect profilele la 90°", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:02:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "140-00-219-00", "Denumire produs": "Colțar mecanic;mbinare mecanică a tocului sau cercevelei", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:02:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "140-11-190-00", "Denumire produs": "Colțar turnat;colțar din aluminiu turnat ,rezistenta maxima", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:02:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "113-23-270-00", "Denumire produs": "Colțar mecanic;pentru greutate mare", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:02:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "125-23-266-00", "Denumire produs": "Colțar mecanic,uși grele", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:02:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "470-11-839-00", "Denumire produs": "Colțar dublu;pentru combinații complexe", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:02:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "290-00-000-00", "Denumire produs": "Punte geam;susține pachetul de sticlă", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:02:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67508", "Denumire produs": "Toc standard;toc de baza,pentru ferestre oscilo-batante și uși", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67510", "Denumire produs": "Toc adanc recomandat la ferestre mari;geam triplu", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67514", "Denumire produs": "Toc lat;pentru pereți groși", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67814", "Denumire produs": "Toc extra adanc folosit pt puncte comerciale", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67886", "Denumire produs": "Toc heavy duty , cu trafic intens,folosit la ccv foarte grele", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67906", "Denumire produs": "Toc ranforsat ferestre mari", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67709", "Denumire produs": "Toc mediu aplicații mixte", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67408", "Denumire produs": "Toc cu mascare accent pe design", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67150", "Denumire produs": "Toc cu rulou pentru sisteme combinate", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67500", "Denumire produs": "Toc special", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67542", "Denumire produs": "Cercevea standard,cercevea de bază", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67936", "Denumire produs": "Cercevea heavy;ferestre mai mari, geam triplu", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67544", "Denumire produs": "Cercevea intarita;pentru ferestre de dimensiuni medii–mari", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67938", "Denumire produs": "Cercevea lat;desingn+rezistenta", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67552", "Denumire produs": "Cercevea usa;", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67630", "Denumire produs": "Cercevea deschidere exterior;ferestre care se deschid în afară", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67893", "Denumire produs": "Cercevea mare ;ferestre mari,geam greu", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67976", "Denumire produs": "Cercevea clasica;versatilă", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67870", "Denumire produs": "Cercevea eurogroove;pentru ferestre oscilo-batante", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67972", "Denumire produs": "Cercevea speciala", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67562", "Denumire produs": "Stulp de baza", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67564", "Denumire produs": "Stulp armare cercevele mai grele", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67776", "Denumire produs": "Stulp lat pt ferestre mari sau usi duble grele", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67566", "Denumire produs": "Stulp ingust cand  deschiderile nu sunt foarte mari;design", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67770", "Denumire produs": ".Stulp heavy duty / de rezistență ;uși comerciale", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67570", "Denumire produs": "montant standard/ferestre normale", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:47:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67572", "Denumire produs": "montant ranforsat când suprafața crește/geam greu / triplu", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:47:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67574", "Denumire produs": "montant îngust;design/design subțire", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:47:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67772", "Denumire produs": "montant structural ;ferestre foarte mari/goluri foarte mari", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:47:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67774", "Denumire produs": "montant heavy duty;vitraje comerciale/goluri foarte mari", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:47:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67623", "Denumire produs": "Profil aditional;extensie toc", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:47:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67622", "Denumire produs": "Profil aditional lat;", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:47:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S77482", "Denumire produs": "Profil extensie;Profil de extensie / compensare", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:47:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67674", "Denumire produs": "Profil prag", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:47:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "S67518", "Denumire produs": "Profil toc inferior;protecție anti-apă", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:47:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "3131501200", "Denumire produs": "NRG bar;cercevele mari;uși,geamuri grele", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "2507750003", "Denumire produs": "Conector;utilizat în combinații complexe", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "2906700100", "Denumire produs": "Glazing bridge", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M11008", "Denumire produs": "Profil de toc (cadru fix) – variantă pentru rame/ferestre. (Cod listat în indexul M11000)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M11010", "Denumire produs": "Profil de toc (cadru fix) – variantă diferită (altă lățime/rigiditate).", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M11014", "Denumire produs": "Profil de toc (cadru fix). Apare explicit în tipologii ca «Frame M11014».", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M11016", "Denumire produs": "Profil de toc (cadru fix) – variantă pentru configurații speciale.", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M11018", "Denumire produs": "Profil de cercevea (canat) – pentru mecanism European Groove (conform index).", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M11020", "Denumire produs": "Profil de cercevea (canat) – variantă mai lată/rigidă.", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M11024", "Denumire produs": "Profil de cercevea (canat) – variantă (listat în index).", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M11030", "Denumire produs": "Profil de cercevea (canat) – variantă (listat în index).", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M11034", "Denumire produs": "Profil de cercevea (canat) – variantă (listat în index).", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M11038", "Denumire produs": "Profil de cercevea (canat) – variantă (listat în index).", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M11040", "Denumire produs": "Profil de cercevea (canat) – variantă (listat în index).", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M11044", "Denumire produs": "Profil de cercevea (canat) – apare și în pagini de secțiuni 1:1.", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M11048", "Denumire produs": "Profil de cercevea (canat) – variantă curbată/masivă (apare în pagini 1:1).", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M11050", "Denumire produs": "Profil de cercevea (canat) – variantă (index).", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M11058", "Denumire produs": "Profil «Sash invertion profile» pentru mecanism European Groove (vizibil).", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M11076", "Denumire produs": "Profil special (listat în index) – folosit la configurații/rame speciale.", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M11080", "Denumire produs": "Profil special (listat în index) – variantă pentru rame/soluții speciale.", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M 11062", "Denumire produs": "profil T standard 70 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M 11064", "Denumire produs": "profil T standard 80 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:35:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M 11066", "Denumire produs": "profil T 90 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:47:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M 11068", "Denumire produs": "profil T 106 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:47:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M 11260", "Denumire produs": "profil T 80 mm (variantă)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:47:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M 11266", "Denumire produs": "profil T 90 mm (variantă)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:47:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M 11070", "Denumire produs": "profil T 200 mm (mare)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:47:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M 11362", "Denumire produs": "secțiuni variante ale profilului T (ex. variante cu PVC-look, diferite dimensiuni", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:47:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M 11366", "Denumire produs": "secțiuni variante ale profilului T (ex. variante cu PVC-look, diferite dimensiuni", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:47:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M 11466", "Denumire produs": "secțiuni variante ale profilului T (ex. variante cu PVC-look, diferite dimensiuni", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:47:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "M 11467", "Denumire produs": "secțiuni variante ale profilului T (ex. variante cu PVC-look, diferite dimensiuni", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 11:47:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45100", "Denumire produs": "toc standard, adâncime mică, ferestre uzuale", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 12:08:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45101", "Denumire produs": "toc standard, rigiditate mai bună (cel mai folosit)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:42:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45102", "Denumire produs": "toc ranforsat pentru dimensiuni mai mari", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:42:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45111", "Denumire produs": "toc cu rigiditate crescută pentru uși", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:42:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45121", "Denumire produs": "toc cu geometrie specială (ancorare / montaj)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45130", "Denumire produs": "toc foarte ranforsat, deschideri mari", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45150", "Denumire produs": "toc pentru sistem curbat", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45151", "Denumire produs": "toc curbat, rigiditate medie", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45152", "Denumire produs": "toc curbat ranforsat", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45153", "Denumire produs": "toc lat pentru uși / vitraje mari", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45154", "Denumire produs": "toc pentru uși grele", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45171", "Denumire produs": "toc „reverse” (deschidere inversă)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45185", "Denumire produs": "toc special pentru cercevele ascunse", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45190", "Denumire produs": "toc structural, sarcini mari", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45200", "Denumire produs": "cercevea standard, ferestre normale", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45201", "Denumire produs": "cercevea ranforsată (cea mai folosită)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45202", "Denumire produs": "cercevea pentru uși / foi mari", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45221", "Denumire produs": "cercevea cu canal PVC (feronerie PVC)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45222", "Denumire produs": "cercevea PVC ranforsată", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45230", "Denumire produs": "cercevea pentru sistem pivotant", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45241", "Denumire produs": "cercevea ușoară", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45242", "Denumire produs": "cercevea ranforsată pentru uși", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45243", "Denumire produs": "cercevea rigidă, sarcini mari", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45247", "Denumire produs": "cercevea PVC heavy duty", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45250", "Denumire produs": "cercevea lată", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45251", "Denumire produs": "cercevea lată ranforsată", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45252", "Denumire produs": "cercevea pentru uși grele", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45260", "Denumire produs": "cercevea „hidden vent” (cercevea ascunsă)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45261", "Denumire produs": "hidden vent, variantă ranforsată", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45271", "Denumire produs": "cercevea PVC standard", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45272", "Denumire produs": "cercevea PVC ranforsată", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45292", "Denumire produs": "cercevea specială (geometrie mixtă)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45297", "Denumire produs": "cercevea PVC heavy duty", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45300", "Denumire produs": "stulp standard (pasiv)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45301", "Denumire produs": "stulp activ (cel mai folosit)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45302", "Denumire produs": "stulp ranforsat", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45303", "Denumire produs": "stulp structural, foarte rigid", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45304", "Denumire produs": "stulp cu rigiditate mare, uși", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45330", "Denumire produs": "stulp lat pentru deschideri mari", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45331", "Denumire produs": "stulp foarte lat, sarcini extreme", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45340", "Denumire produs": "stulp pentru deschidere inversă", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45350", "Denumire produs": "stulp ranforsat curbat", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45351", "Denumire produs": "stulp heavy duty", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E40135", "Denumire produs": "montan structural", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E40600", "Denumire produs": "profil de rigidizare mare", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E40602", "Denumire produs": "traversă mică / distanțier", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E40603", "Denumire produs": "traversă standard", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E40604", "Denumire produs": "profil auxiliar mic", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E40605", "Denumire produs": "profil de închidere", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E40622", "Denumire produs": "profil suport accesorii", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:43:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E40626", "Denumire produs": "profil pentru hidden vent", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E40650", "Denumire produs": "profil decorativ / mascare", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E40651", "Denumire produs": "profil auxiliar structural", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E40660", "Denumire produs": "profil hidden vent secundar", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E40995", "Denumire produs": "profil tehnic (etanșare / suport)", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45500", "Denumire produs": "montan PVC compatibil", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45540", "Denumire produs": "montan PVC", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45550", "Denumire produs": "montan standard", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45560", "Denumire produs": "montan hidden vent", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45590", "Denumire produs": "montan PVC ranforsat", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45655", "Denumire produs": "montan ușor", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 13:44:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45656", "Denumire produs": "montan heavy duty", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 14:14:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E1115", "Denumire produs": "profile de mascare", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 14:15:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E1127", "Denumire produs": "profile de mascare", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 14:16:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E22603", "Denumire produs": "capac armătură", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 14:16:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E22616 – CAPAC PENTRU PROFIL RANFORSARE", "Denumire produs": "capac pentru profil ranforsare", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 14:16:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E2308", "Denumire produs": "distanțier mic", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 14:16:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E2357", "Denumire produs": "profil suport etanșare", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 14:16:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E40812", "Denumire produs": "profile mici auxiliare", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 14:16:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E40820", "Denumire produs": "profile mici auxiliare", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 14:16:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E40813", "Denumire produs": "profile mici auxiliare", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 14:16:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45820", "Denumire produs": "– profile de mascare / compensare", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 14:16:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45800", "Denumire produs": "– profile de mascare / compensare", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 14:16:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45801", "Denumire produs": "– profile de mascare / compensare", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 14:16:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45810", "Denumire produs": "– profile de mascare / compensare", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 14:16:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E45811", "Denumire produs": "– profile de mascare / compensare", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 14:16:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E50690", "Denumire produs": "Profil intermediar", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E50691", "Denumire produs": "Profil intermediar", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E5366", "Denumire produs": "profil suport", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 14:16:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E60230", "Denumire produs": "profile de montaj / adaptare", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 14:16:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E60215", "Denumire produs": "profile de montaj / adaptare", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 14:16:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E60222", "Denumire produs": "profile de montaj / adaptare", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 14:16:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E60225", "Denumire produs": "profile de montaj / adaptare", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 14:16:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E62050", "Denumire produs": "profil de ranforsare major", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 14:16:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E62600", "Denumire produs": "profil mic auxiliar", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 14:16:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E19650", "Denumire produs": "profil tehnic", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 14:16:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4270100", "Denumire produs": "Toc principal", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:22:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4268600", "Denumire produs": "Coloană 90°", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:22:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E75603", "Denumire produs": "Coloană rotundă", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E75602", "Denumire produs": "Adaptor coloană", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4270300", "Denumire produs": "Montant T", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4270200", "Denumire produs": "Cercevea standard", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4270201", "Denumire produs": "Cercevea variantă", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4270500", "Denumire produs": "Cercevea secundară", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4270220", "Denumire produs": "Cercevea PVC", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4270221", "Denumire produs": "Cercevea PVC variantă", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4270540", "Denumire produs": "Cercevea secundară PVC", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4275606", "Denumire produs": "Profil aliniere", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4060307", "Denumire produs": "7 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4060310", "Denumire produs": "9.5 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4060312", "Denumire produs": "12 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4060315", "Denumire produs": "14.5 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4060317", "Denumire produs": "17 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4060320", "Denumire produs": "19.5 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4060322", "Denumire produs": "22 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4060325", "Denumire produs": "24.5 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4060327", "Denumire produs": "27 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4060330", "Denumire produs": "29.5 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4060332", "Denumire produs": "32 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4060335", "Denumire produs": "34.5 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4060337", "Denumire produs": "37 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4060340", "Denumire produs": "39.5 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4060342", "Denumire produs": "42 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET130475", "Denumire produs": "garnitură geam 3 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET130476", "Denumire produs": "garnitură geam 3 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET130176", "Denumire produs": "5–6 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET130177", "Denumire produs": "7–8 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET130205", "Denumire produs": "5–8 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET130206", "Denumire produs": "Garnitură 6 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:04:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET130207", "Denumire produs": "Garnitură 7 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:04:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET130208", "Denumire produs": "5–8 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET130070", "Denumire produs": "garnitură centrală", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET130758", "Denumire produs": "garnitură interioară", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET054826", "Denumire produs": "Colțar toc", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:21:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET054827", "Denumire produs": "Colțar toc", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:22:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET054830", "Denumire produs": "Colțar GU", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:22:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET054832", "Denumire produs": "Colțar Winkhaus", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:22:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET054833", "Denumire produs": "Colțar PVC", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:22:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET054834", "Denumire produs": "Colțar Euro", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:22:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET054835", "Denumire produs": "Colțar Euro", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:22:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET054838", "Denumire produs": "Colțar PVC", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:22:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET054875", "Denumire produs": "Colțar mic PVC", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:22:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET073701", "Denumire produs": "calare toc", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET073681", "Denumire produs": "calare cercevea", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET058001", "Denumire produs": "colțar aliniere", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET991407", "Denumire produs": "suport T", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-19 08:33:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET070206", "Denumire produs": "suport montaj", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET143900", "Denumire produs": "pini", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET143914", "Denumire produs": "pini", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET730035", "Denumire produs": "adeziv", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-19 08:37:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET990855", "Denumire produs": "Adeziv colț", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:22:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET074306", "Denumire produs": "Capac drenaj", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:22:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET074307", "Denumire produs": "Capac drenaj", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:22:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E4060345", "Denumire produs": "44.5 mm", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET054826 / 827 / 830 / 832", "Denumire produs": "colțare toc", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "ET054833 / 834 / 835 / 838 / 875", "Denumire produs": "colțare cercevea", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-18 15:23:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E85100", "Denumire produs": "MONTANTI", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-19 08:39:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E85103", "Denumire produs": "MONTANTI", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-19 08:39:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E85107", "Denumire produs": "MONTANTI", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-19 08:39:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E85109", "Denumire produs": "MONTANTI", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-19 08:39:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E85152", "Denumire produs": "MONTANTI - split mullion", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-19 08:39:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E85153", "Denumire produs": "MONTANTI - split mullion", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-19 08:39:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E85300", "Denumire produs": "TRAVERSE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-19 08:40:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E85301", "Denumire produs": "TRAVERSE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-19 08:40:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E85303", "Denumire produs": "TRAVERSE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-19 08:40:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E85307", "Denumire produs": "TRAVERSE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-19 08:40:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E85700", "Denumire produs": "CAPACE EXTERIOARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-19 08:40:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E85714", "Denumire produs": "CAPACE EXTERIOARE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-19 08:40:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E85354", "Denumire produs": "PROFILE SPECIALE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-19 08:40:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E85359", "Denumire produs": "PROFILE SPECIALE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-19 08:40:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E85360", "Denumire produs": "PROFILE SPECIALE", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-19 08:40:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E85101", "Denumire produs": "MONTANTI", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-19 08:39:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E85102", "Denumire produs": "MONTANTI", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-19 08:39:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E85104", "Denumire produs": "MONTANTI", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-19 08:39:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E85105", "Denumire produs": "MONTANTI", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-19 08:39:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E85106", "Denumire produs": "MONTANTI", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-19 08:39:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ETEM", "Cod produs": "E85108", "Denumire produs": "MONTANTI", "Stoc initial": 0, "Intrari": 0, "Data intrari": "2026-03-19 08:39:00", "Iesiri": 0, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "EX-3605890112", "Denumire produs": "BALAMA DUBLA DE USA 65mm CU SUR", "Stoc initial": 0, "Intrari": 12, "Data intrari": "2026-03-19 08:40:00", "Iesiri": 12, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "EX-4740372203", "Denumire produs": "ZAVOR USI COPLANARE 140x22x8mm", "Stoc initial": 0, "Intrari": 2, "Data intrari": "2026-03-19 08:40:00", "Iesiri": 2, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "EX-4743733000", "Denumire produs": "CUIB ZAVOR DE USA EXTERIOR", "Stoc initial": 0, "Intrari": 1, "Data intrari": "2026-03-19 08:40:00", "Iesiri": 1, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "EX-4809101000", "Denumire produs": "CHIT DE BAZA MEC ANTIPANICA CU P", "Stoc initial": 0, "Intrari": 1, "Data intrari": "2026-03-19 08:40:00", "Iesiri": 1, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "EX-4809101109", "Denumire produs": "BARA DE OTEL 1130mm PT MECHANIS", "Stoc initial": 0, "Intrari": 1, "Data intrari": "2026-03-19 08:40:00", "Iesiri": 1, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "EX-4809101503", "Denumire produs": "MANER NEGRU EXTERIOR CU BUTUC P", "Stoc initial": 0, "Intrari": 1, "Data intrari": "2026-03-19 08:40:00", "Iesiri": 1, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "EX-4809101703", "Denumire produs": "TIJE DE CONECTARE PENTRU MECANI", "Stoc initial": 0, "Intrari": 1, "Data intrari": "2026-03-19 08:40:00", "Iesiri": 1, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "EX-4809101303", "Denumire produs": "PERECHE DE ELEMENTE DE INCHIDERE", "Stoc initial": 0, "Intrari": 1, "Data intrari": "2026-03-19 08:40:00", "Iesiri": 1, "Data iesiri": "", "Stoc final": 0, "UM": "BUC"}, {"Categorie": "ALUMIL", "Cod produs": "EX-3101127000", "Denumire produs": "CAPAC PLASTIC PT. M11270(PER)", "Stoc initial": 0, "Intrari": 2, "Data intrari": "2026-03-19 08:40:00", "Iesiri": 2, "Data iesiri": "", "Stoc final": 0, "UM": "PER"}, {"Categorie": "ALUMIL", "Cod produs": "M958.9016", "Denumire produs": "M958 HB X-9016 KAM ET KI", "Stoc initial": 0, "Intrari": 6, "Data intrari": "2026-03-19 08:40:00", "Iesiri": 6, "Data iesiri": "", "Stoc final": 0, "UM": "M"}, {"Categorie": "ALUMIL", "Cod produs": "M991.9016", "Denumire produs": "M991 HB X-9016 KAM ET KI", "Stoc initial": 0, "Intrari": 12, "Data intrari": "2026-03-19 08:40:00", "Iesiri": 12, "Data iesiri": "", "Stoc final": 0, "UM": "M"}, {"Categorie": "ALUMIL", "Cod produs": "M944.9016", "Denumire produs": "M944 HB X-9016 KAM ET KI", "Stoc initial": 0, "Intrari": 6, "Data intrari": "2026-03-19 08:40:00", "Iesiri": 6, "Data iesiri": "", "Stoc final": 0, "UM": "M"}, {"Categorie": "ALUMIL", "Cod produs": "M945.9016", "Denumire produs": "M945 HB X-9016", "Stoc initial": 0, "Intrari": 12, "Data intrari": "2026-03-19 10:10:00", "Iesiri": 12, "Data iesiri": "", "Stoc final": 0, "UM": "M"}];
+    const STORAGE_KEY = 'inventar_touch_pro_barcodes_v1';
+    let originalData = [];
+    let filteredData = [];
+    let currentPage = 1;
+    let rowsPerPage = 50;
+    let sortKey = '';
+    let sortDirection = 'asc';
+    let stream = null;
+    let scanTimer = null;
+    let currentBarcodeSvg = '';
+    let currentBarcodeFileName = 'barcode.svg';
+
+    const $ = id => document.getElementById(id);
+    const tbody = document.querySelector('#inventoryTable tbody');
+
+    function nowStamp() {
+      const d = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+
+    function toNumber(value) {
+      const n = Number(String(value ?? '').replace(',', '.').trim());
+      return isNaN(n) ? 0 : n;
+    }
+
+    function formatNumber(value) {
+      const n = toNumber(value);
+      return Number.isInteger(n) ? String(n) : String(n);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function normalizeCode(value) {
+      return String(value ?? '').trim();
+    }
+
+    function loadData() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          originalData = JSON.parse(saved);
+          $('saveStatus').textContent = 'Date locale active';
+          return;
+        } catch (e) {}
+      }
+      originalData = JSON.parse(JSON.stringify(INITIAL_DATA));
+      $('saveStatus').textContent = 'Date locale inactive';
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(originalData));
+      $('saveStatus').textContent = 'Salvat local în browser';
+    }
+
+    function resetToInitial() {
+      localStorage.removeItem(STORAGE_KEY);
+      originalData = JSON.parse(JSON.stringify(INITIAL_DATA));
+      rebuildFilters();
+      applyFilters();
+      $('saveStatus').textContent = 'Revenit la datele inițiale';
+    }
+
+    function rebuildFilters() {
+      const current = $('categoryFilter').value;
+      const categories = [...new Set(originalData.map(x => x['Categorie']).filter(Boolean))].sort((a,b) => String(a).localeCompare(String(b), 'ro'));
+      $('categoryFilter').innerHTML = '<option value="">Toate categoriile</option>';
+      for (const cat of categories) {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        $('categoryFilter').appendChild(option);
+      }
+      if (categories.includes(current)) $('categoryFilter').value = current;
+    }
+
+    function recalcRow(row) {
+      row['Stoc initial'] = formatNumber(row['Stoc initial']);
+      row['Intrari'] = formatNumber(row['Intrari']);
+      row['Iesiri'] = formatNumber(row['Iesiri']);
+      row['Stoc final'] = formatNumber(toNumber(row['Stoc initial']) + toNumber(row['Intrari']) - toNumber(row['Iesiri']));
+      row['Categorie'] = String(row['Categorie'] ?? '');
+      row['Cod produs'] = normalizeCode(row['Cod produs']);
+      row['Denumire produs'] = String(row['Denumire produs'] ?? '');
+      row['UM'] = String(row['UM'] ?? '');
+      row['Data intrari'] = String(row['Data intrari'] ?? '');
+      row['Data iesiri'] = String(row['Data iesiri'] ?? '');
+    }
+
+    function applyFilters() {
+      const q = $('search').value.trim().toLowerCase();
+      const category = $('categoryFilter').value;
+      const stock = $('stockFilter').value;
+
+      filteredData = originalData.filter(row => {
+        const matchesSearch = !q || Object.values(row).some(v => String(v).toLowerCase().includes(q));
+        const matchesCategory = !category || row['Categorie'] === category;
+        const stockValue = toNumber(row['Stoc final']);
+        const matchesStock =
+          !stock ||
+          (stock === 'positive' && stockValue > 0) ||
+          (stock === 'zero' && stockValue === 0) ||
+          (stock === 'negative' && stockValue < 0);
+        return matchesSearch && matchesCategory && matchesStock;
+      });
+
+      if (sortKey) filteredData.sort(compareRows(sortKey, sortDirection));
+      currentPage = 1;
+      renderTable();
+      updateStats();
+    }
+
+    function compareRows(key, direction) {
+      return (a, b) => {
+        const av = a[key] ?? '';
+        const bv = b[key] ?? '';
+        const aNum = toNumber(av);
+        const bNum = toNumber(bv);
+        const bothNumeric = String(av).trim() !== '' && String(bv).trim() !== '' && !isNaN(aNum) && !isNaN(bNum);
+        let result = bothNumeric
+          ? aNum - bNum
+          : String(av).localeCompare(String(bv), 'ro', { numeric: true, sensitivity: 'base' });
+        return direction === 'asc' ? result : -result;
+      };
+    }
+
+    function sortData(key) {
+      if (sortKey === key) {
+        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortKey = key;
+        sortDirection = 'asc';
+      }
+      filteredData.sort(compareRows(key, sortDirection));
+      renderTable();
+    }
+
+    function changeEntry(index, delta) {
+      const row = originalData[index];
+      row['Intrari'] = formatNumber(toNumber(row['Intrari']) + delta);
+      row['Data intrari'] = nowStamp();
+      recalcRow(row);
+      saveData();
+      applyFilters();
+    }
+
+    function changeExit(index, delta) {
+      const row = originalData[index];
+      row['Iesiri'] = formatNumber(toNumber(row['Iesiri']) + delta);
+      row['Data iesiri'] = nowStamp();
+      recalcRow(row);
+      saveData();
+      applyFilters();
+    }
+
+    function updateField(index, field, value) {
+      originalData[index][field] = value;
+      if (field === 'Intrari' || field === 'Iesiri' || field === 'Stoc initial') {
+        if (field === 'Intrari') originalData[index]['Data intrari'] = nowStamp();
+        if (field === 'Iesiri') originalData[index]['Data iesiri'] = nowStamp();
+      }
+      recalcRow(originalData[index]);
+      saveData();
+      applyFilters();
+    }
+
+    function deleteProduct(index) {
+      const row = originalData[index];
+      const ok = confirm(`Ștergi produsul ${row['Cod produs']} - ${row['Denumire produs']} ?`);
+      if (!ok) return;
+      originalData.splice(index, 1);
+      saveData();
+      rebuildFilters();
+      applyFilters();
+    }
+
+    function generateNextCode() {
+      const prefix = 'INV';
+      const numericParts = originalData
+        .map(x => String(x['Cod produs'] || '').match(/^INV(\d+)$/i))
+        .filter(Boolean)
+        .map(m => Number(m[1]));
+      const next = (numericParts.length ? Math.max(...numericParts) : 0) + 1;
+      return prefix + String(next).padStart(6, '0');
+    }
+
+    function addProduct() {
+      const row = {
+        'Categorie': $('newCategorie').value.trim(),
+        'Cod produs': $('newCod').value.trim(),
+        'Denumire produs': $('newDenumire').value.trim(),
+        'Stoc initial': $('newStocInitial').value.trim() || '0',
+        'Intrari': '0',
+        'Data intrari': '',
+        'Iesiri': '0',
+        'Data iesiri': '',
+        'Stoc final': '0',
+        'UM': $('newUM').value.trim()
+      };
+
+      if (!row['Cod produs']) return alert('Completează codul produsului.');
+      if (!row['Denumire produs']) return alert('Completează denumirea produsului.');
+
+      const exists = originalData.some(x => String(x['Cod produs']).trim().toLowerCase() === row['Cod produs'].toLowerCase());
+      if (exists) return alert('Există deja un produs cu acest cod.');
+
+      recalcRow(row);
+      originalData.unshift(row);
+      saveData();
+      rebuildFilters();
+      applyFilters();
+
+      ['newCategorie','newCod','newDenumire','newUM'].forEach(id => $(id).value = '');
+      $('newStocInitial').value = '0';
+    }
+
+    function renderCode128SVG(text, width = 220, height = 72) {
+      text = normalizeCode(text);
+      if (!text) return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><text x="10" y="30">Fără cod</text></svg>`;
+
+      // Code128 subset B
+      const patterns = [
+        "11011001100","11001101100","11001100110","10010011000","10010001100","10001001100","10011001000","10011000100",
+        "10001100100","11001001000","11001000100","11000100100","10110011100","10011011100","10011001110","10111001100",
+        "10011101100","10011100110","11001110010","11001011100","11001001110","11011100100","11001110100","11101101110",
+        "11101001100","11100101100","11100100110","11101100100","11100110100","11100110010","11011011000","11011000110",
+        "11000110110","10100011000","10001011000","10001000110","10110001000","10001101000","10001100010","11010001000",
+        "11000101000","11000100010","10110111000","10110001110","10001101110","10111011000","10111000110","10001110110",
+        "11101110110","11010001110","11000101110","11011101000","11011100010","11011101110","11101011000","11101000110",
+        "11100010110","11101101000","11101100010","11100011010","11101111010","11001000010","11110001010","10100110000",
+        "10100001100","10010110000","10010000110","10000101100","10000100110","10110010000","10110000100","10011010000",
+        "10011000010","10000110100","10000110010","11000010010","11001010000","11110111010","11000010100","10001111010",
+        "10100111100","10010111100","10010011110","10111100100","10011110100","10011110010","11110100100","11110010100",
+        "11110010010","11011011110","11011110110","11110110110","10101111000","10100011110","10001011110","10111101000",
+        "10111100010","11110101000","11110100010","10111011110","10111101110","11101011110","11110101110","11010000100",
+        "11010010000","11010011100","1100011101011"
+      ];
+
+      const START_B = 104;
+      const STOP = 106;
+
+      const codes = [START_B];
+      for (let i = 0; i < text.length; i++) {
+        const code = text.charCodeAt(i) - 32;
+        if (code < 0 || code > 95) {
+          return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+            <rect width="100%" height="100%" fill="white"/>
+            <text x="10" y="24" font-size="14" fill="red">Cod invalid pentru Code128</text>
+            <text x="10" y="46" font-size="14">${text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</text>
+          </svg>`;
+        }
+        codes.push(code);
+      }
+
+      let checksum = START_B;
+      for (let i = 0; i < text.length; i++) checksum += (text.charCodeAt(i) - 32) * (i + 1);
+      checksum = checksum % 103;
+      codes.push(checksum, STOP);
+
+      const bits = codes.map(c => patterns[c]).join('');
+      const quiet = 10;
+      const moduleWidth = Math.max(1, Math.floor((width - quiet * 2) / bits.length));
+      const actualWidth = bits.length * moduleWidth + quiet * 2;
+      const barHeight = height - 18;
+
+      let x = quiet;
+      let rects = '';
+      for (const bit of bits) {
+        if (bit === '1') rects += `<rect x="${x}" y="0" width="${moduleWidth}" height="${barHeight}" fill="black"/>`;
+        x += moduleWidth;
+      }
+
+      const safeText = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="${actualWidth}" height="${height}" viewBox="0 0 ${actualWidth} ${height}">
+        <rect width="100%" height="100%" fill="white"/>
+        ${rects}
+        <text x="${actualWidth/2}" y="${height-2}" text-anchor="middle" font-family="Arial" font-size="14">${safeText}</text>
+      </svg>`;
+    }
+
+    function barcodeCellHtml(code) {
+      return `<div class="barcode-svg">${renderCode128SVG(code, 220, 72)}</div>`;
+    }
+
+    function openBarcodeModal(row) {
+      currentBarcodeSvg = `
+        <div style="font-weight:700;font-size:20px;margin-bottom:8px;">${escapeHtml(row['Denumire produs'])}</div>
+        <div style="color:#475569;margin-bottom:12px;">${escapeHtml(row['Cod produs'])}</div>
+        ${renderCode128SVG(row['Cod produs'], 560, 140)}
+      `;
+      currentBarcodeFileName = `${String(row['Cod produs'] || 'barcode').replace(/[^a-z0-9_-]/gi, '_')}.svg`;
+      $('barcodePreview').innerHTML = currentBarcodeSvg;
+      $('barcodeModal').classList.add('active');
+    }
+
+    function closeBarcodeModal() {
+      $('barcodeModal').classList.remove('active');
+    }
+
+    function downloadCurrentBarcodeSvg() {
+      const svg = $('barcodePreview').querySelector('svg');
+      if (!svg) return;
+      const blob = new Blob([svg.outerHTML], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = currentBarcodeFileName;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function printSingleBarcode() {
+      const preview = $('barcodePreview').innerHTML;
+      $('printArea').innerHTML = `<div style="padding:20px;">${preview}</div>`;
+      window.print();
+    }
+
+    function printAllBarcodes() {
+      const html = originalData.map(row => `
+        <div class="print-card">
+          <div class="name">${escapeHtml(row['Denumire produs'])}</div>
+          ${renderCode128SVG(row['Cod produs'], 240, 92)}
+          <div class="code">${escapeHtml(row['Cod produs'])}</div>
+        </div>
+      `).join('');
+      $('printArea').innerHTML = `<div style="padding:16px;"><div class="print-grid">${html}</div></div>`;
+      window.print();
+    }
+
+    function renderTable() {
+      rowsPerPage = Number($('rowsPerPage').value);
+      const totalPages = Math.max(1, Math.ceil(filteredData.length / rowsPerPage));
+      if (currentPage > totalPages) currentPage = totalPages;
+
+      const start = (currentPage - 1) * rowsPerPage;
+      const pageData = filteredData.slice(start, start + rowsPerPage);
+
+      tbody.innerHTML = '';
+      for (const row of pageData) {
+        const realIndex = originalData.indexOf(row);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><input value="${escapeHtml(row['Categorie'])}" data-index="${realIndex}" data-field="Categorie"></td>
+          <td><input value="${escapeHtml(row['Cod produs'])}" data-index="${realIndex}" data-field="Cod produs"></td>
+          <td><input value="${escapeHtml(row['Denumire produs'])}" data-index="${realIndex}" data-field="Denumire produs"></td>
+          <td><input type="number" step="any" value="${escapeHtml(row['Stoc initial'])}" data-index="${realIndex}" data-field="Stoc initial"></td>
+          <td><input type="number" step="any" value="${escapeHtml(row['Intrari'])}" data-index="${realIndex}" data-field="Intrari"></td>
+          <td>
+            <div class="qty-box">
+              <input type="number" step="any" value="1" id="addIn_${realIndex}">
+              <button class="green" data-action="entry" data-index="${realIndex}">+ Intrare</button>
+            </div>
+          </td>
+          <td><input type="number" step="any" value="${escapeHtml(row['Iesiri'])}" data-index="${realIndex}" data-field="Iesiri"></td>
+          <td>
+            <div class="qty-box">
+              <input type="number" step="any" value="1" id="addOut_${realIndex}">
+              <button class="orange" data-action="exit" data-index="${realIndex}">- Ieșire</button>
+            </div>
+          </td>
+          <td><strong>${escapeHtml(row['Stoc final'])}</strong></td>
+          <td>${escapeHtml(row['Data intrari'])}</td>
+          <td>${escapeHtml(row['Data iesiri'])}</td>
+          <td><input value="${escapeHtml(row['UM'])}" data-index="${realIndex}" data-field="UM"></td>
+          <td>${barcodeCellHtml(row['Cod produs'])}</td>
+          <td class="row-actions">
+            <button class="blue" data-action="show-barcode" data-index="${realIndex}">Cod de bare</button>
+            <button class="red" data-action="delete" data-index="${realIndex}">Șterge</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      }
+
+      $('resultInfo').textContent = `${filteredData.length} rezultate`;
+      $('pageInfo').textContent = `Pagina ${currentPage} / ${totalPages}`;
+      $('currentPageLabel').textContent = String(currentPage);
+      $('prevBtn').disabled = currentPage <= 1;
+      $('nextBtn').disabled = currentPage >= totalPages;
+
+      tbody.querySelectorAll('input[data-field]').forEach(input => {
+        input.addEventListener('change', e => {
+          updateField(Number(e.target.dataset.index), e.target.dataset.field, e.target.value);
+        });
+      });
+
+      tbody.querySelectorAll('button[data-action="entry"]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          const i = Number(e.target.dataset.index);
+          const qty = toNumber(document.getElementById(`addIn_${i}`).value || 1);
+          changeEntry(i, qty);
+        });
+      });
+
+      tbody.querySelectorAll('button[data-action="exit"]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          const i = Number(e.target.dataset.index);
+          const qty = toNumber(document.getElementById(`addOut_${i}`).value || 1);
+          changeExit(i, qty);
+        });
+      });
+
+      tbody.querySelectorAll('button[data-action="delete"]').forEach(btn => {
+        btn.addEventListener('click', e => deleteProduct(Number(e.target.dataset.index)));
+      });
+
+      tbody.querySelectorAll('button[data-action="show-barcode"]').forEach(btn => {
+        btn.addEventListener('click', e => openBarcodeModal(originalData[Number(e.target.dataset.index)]));
+      });
+    }
+
+    function updateStats() {
+      $('countProducts').textContent = String(filteredData.length);
+      $('sumStock').textContent = String(filteredData.reduce((s, row) => s + toNumber(row['Stoc final']), 0));
+      $('countCategories').textContent = String(new Set(filteredData.map(x => x['Categorie']).filter(Boolean)).size);
+    }
+
+    function exportCSV() {
+      const headers = ['Categorie','Cod produs','Denumire produs','Stoc initial','Intrari','Data intrari','Iesiri','Data iesiri','Stoc final','UM'];
+      const csvRows = [headers.join(',')];
+      for (const row of originalData) {
+        const values = headers.map(h => `"${String(row[h] ?? '').replace(/"/g, '""')}"`);
+        csvRows.push(values.join(','));
+      }
+      const blob = new Blob(["\ufeff" + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'inventar_touch_pro_barcodes.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function focusFoundProduct(code) {
+      const normalized = code.trim().toLowerCase();
+      if (!normalized) return;
+      $('search').value = code;
+      applyFilters();
+      const exact = originalData.find(row => String(row['Cod produs']).trim().toLowerCase() === normalized);
+      if (exact) {
+        $('scanMessage').innerHTML = `<span class="success">Produs găsit:</span> ${escapeHtml(exact['Cod produs'])} - ${escapeHtml(exact['Denumire produs'])}`;
+      } else {
+        $('scanMessage').innerHTML = `<span class="danger">Nu am găsit codul:</span> ${escapeHtml(code)}`;
+      }
+    }
+
+    async function startCameraScanner() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        $('scanMessage').innerHTML = '<span class="danger">Browserul nu permite accesul la cameră.</span>';
+        return;
+      }
+
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+          audio: false
+        });
+        $('video').srcObject = stream;
+        $('videoWrap').style.display = 'block';
+        $('scanMessage').innerHTML = 'Camera este pornită. Ține codul de bare în fața camerei.';
+
+        if ('BarcodeDetector' in window) {
+          const detector = new BarcodeDetector({
+            formats: ['ean_13','ean_8','code_128','code_39','qr_code','upc_a','upc_e']
+          });
+
+          if (scanTimer) clearInterval(scanTimer);
+          scanTimer = setInterval(async () => {
+            try {
+              const barcodes = await detector.detect($('video'));
+              if (barcodes && barcodes.length) {
+                const code = barcodes[0].rawValue;
+                $('scanInput').value = code;
+                focusFoundProduct(code);
+              }
+            } catch (e) {}
+          }, 800);
+        } else {
+          $('scanMessage').innerHTML = 'Camera este pornită. Browserul nu are scanare automată; poți folosi scanner extern sau introducere manuală.';
+        }
+      } catch (e) {
+        $('scanMessage').innerHTML = '<span class="danger">Nu s-a putut porni camera. Verifică permisiunea de cameră.</span>';
+      }
+    }
+
+    function stopCameraScanner() {
+      if (scanTimer) {
+        clearInterval(scanTimer);
+        scanTimer = null;
+      }
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+        stream = null;
+      }
+      $('videoWrap').style.display = 'none';
+      $('scanMessage').textContent = 'Camera este oprită.';
+    }
+
+    function bindEvents() {
+      $('search').addEventListener('input', applyFilters);
+      $('categoryFilter').addEventListener('change', applyFilters);
+      $('stockFilter').addEventListener('change', applyFilters);
+      $('rowsPerPage').addEventListener('change', () => { currentPage = 1; renderTable(); });
+
+      $('prevBtn').addEventListener('click', () => {
+        if (currentPage > 1) { currentPage--; renderTable(); }
+      });
+      $('nextBtn').addEventListener('click', () => {
+        const totalPages = Math.max(1, Math.ceil(filteredData.length / rowsPerPage));
+        if (currentPage < totalPages) { currentPage++; renderTable(); }
+      });
+
+      $('resetFiltersBtn').addEventListener('click', () => {
+        $('search').value = '';
+        $('categoryFilter').value = '';
+        $('stockFilter').value = '';
+        $('rowsPerPage').value = '50';
+        sortKey = '';
+        sortDirection = 'asc';
+        applyFilters();
+      });
+
+      $('addProductBtn').addEventListener('click', addProduct);
+      $('generateCodeForNewBtn').addEventListener('click', () => {
+        $('newCod').value = generateNextCode();
+      });
+
+      $('saveBtn').addEventListener('click', saveData);
+      $('resetDataBtn').addEventListener('click', resetToInitial);
+      $('exportBtn').addEventListener('click', exportCSV);
+      $('printAllBarcodesBtn').addEventListener('click', printAllBarcodes);
+      $('startScanBtn').addEventListener('click', startCameraScanner);
+      $('stopScanBtn').addEventListener('click', stopCameraScanner);
+
+      $('scanInput').addEventListener('change', e => focusFoundProduct(e.target.value));
+      $('scanInput').addEventListener('keyup', e => {
+        if (e.key === 'Enter') focusFoundProduct(e.target.value);
+      });
+
+      $('closeBarcodeModalBtn').addEventListener('click', closeBarcodeModal);
+      $('downloadBarcodeSvgBtn').addEventListener('click', downloadCurrentBarcodeSvg);
+      $('printSingleBarcodeBtn').addEventListener('click', printSingleBarcode);
+      $('barcodeModal').addEventListener('click', e => {
+        if (e.target.id === 'barcodeModal') closeBarcodeModal();
+      });
+
+      document.querySelectorAll('th[data-key]').forEach(th => {
+        th.style.cursor = 'pointer';
+        th.title = 'Apasă pentru sortare';
+        th.addEventListener('click', () => sortData(th.dataset.key));
+      });
+    }
+
+    loadData();
+    originalData.forEach(recalcRow);
+    rebuildFilters();
+    bindEvents();
+    applyFilters();
+  </script>
+</body>
+</html>
